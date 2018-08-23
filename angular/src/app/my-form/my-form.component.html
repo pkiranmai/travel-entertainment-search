@@ -1,0 +1,577 @@
+<div class="container" style="width:100%;">
+    <div class="card bg-light text-dark" style="width:95%; margin: 0 auto;">
+        <form [formGroup]="myform" (ngSubmit)="submitForm(myform.value)">
+            <div class="row">
+                <div class="col-sm-2"></div>
+                <div class="col-sm-8">                
+                    <div class="form-group row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-9">
+                            <h4 class="mobile-center-align">Travel and Entertainment Search</h4>
+                        </div>                    
+                    </div>
+                  
+                    <div class="form-group row">
+                        <div class="col-sm-3">
+                            Keyword <span style="color: red">*</span>
+                        </div>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="keyword" name="keyword" 
+                                [class.border-red]="(myform.controls['keyword'].hasError('required') 
+                                    || myform.controls['keyword'].hasError('whitespace'))
+                                    && myform.controls['keyword'].touched"
+                                [formControl]="myform.controls['keyword']">
+                            <div *ngIf="(myform.controls['keyword'].hasError('required') 
+                                || myform.controls['keyword'].hasError('whitespace'))
+                                && myform.controls['keyword'].touched">
+                                Please enter keyword</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-3">
+                            Category
+                        </div>
+                        <div class="col-sm-5">
+                            <select class="form-control custom-select" formControlName="category">
+                                <option *ngFor="let cat of category" [ngValue]="cat">
+                                    {{ cat.display }}
+                                </option>
+                            </select>
+
+                        </div>
+                        <div class="col-sm-2"></div>
+                        <div class="col-sm-2"></div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-3">
+                            Distance (miles)
+                        </div>
+                        <div class="col-sm-5">
+                            <input type="number" class="form-control" id="distance" name="distance" 
+                                placeholder="10" [formControl]="myform.controls['distance']" step=any>
+                        </div>
+                        <div class="col-sm-2"></div>
+                        <div class="col-sm-2"></div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-3">
+                            From <span style="color: red">*</span>
+                        </div>
+                        <div class="col-sm-9 custom-radio custom-control">
+                            <div class="form-check">
+                                <input type="radio" class="custom-control-input" name="location" 
+                                    (click)="switchRadioBtnLocation('here')" id="here" value="here" 
+                                    [formControl]="myform.controls['location']">
+                                <label class="custom-control-label" for="here"> Current Location</label>
+                            </div>
+                            
+                            <div class="form-check">
+                                <input type="radio" class="custom-control-input" name="location" id="location" 
+                                    value="location" (click)="switchRadioBtnLocation('location')"
+                                    [formControl]="myform.controls['location']">
+                                <label class="custom-control-label" for="location"> Other. Please specify:</label>
+                            </div>
+                            
+                            <div style="float:right; width:97%">
+                                <div id="locationField">
+                                    <input class="form-control" type="text" name="autocomplete" 
+                                        placeholder="location" id="autocomplete" #searchPlaces 
+                                        [class.border-red]="(myform.controls['autocomplete'].hasError('required') 
+                                        || myform.controls['autocomplete'].hasError('whitespace'))
+                                        && myform.controls['autocomplete'].touched"
+                                        [formControl]="myform.controls['autocomplete']">
+                                    <div *ngIf="(myform.controls['autocomplete'].hasError('required') 
+                                        || myform.controls['autocomplete'].hasError('whitespace'))
+                                        && myform.controls['autocomplete'].touched">
+                                        Please enter location</div>
+                                </div>
+                            </div>                            
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4">
+                            <button type="submit" class="btn btn-info" id="search" name="search" 
+                                [disabled]="!locationFound || !myform.valid">
+                                <span class="fa fa-search"></span> Search
+                            </button>
+                            <input type="button" class="btn btn-default" value="Clear" 
+                                id="clear" name="clear" (click)="resetAll()">
+                        </div>
+                        <div class="col-sm-9"></div>
+                    </div>
+                </div>
+                <div class="col-sm-2"></div>
+            </div>
+        </form>
+    </div>
+</div>
+<br>
+<div style="text-align:center;">
+    <button type="button" class="btn" id="resultBtn" name="resultBtn" 
+            [class.btn-info]="resultBtnSelect" 
+            (click)="resultFavouriteBtn('resultTable')">
+        Result
+    </button>
+    <button type="button" class="btn" id="favoriteBtn" name="favoriteBtn" 
+            [class.btn-info]="!resultBtnSelect" 
+            (click)="resultFavouriteBtn('favouriteTable')">
+        Favorites
+    </button>
+</div>
+<br>
+<br>
+<div *ngIf="progressBar" class="progress" style="height: 20px; width:1100px; margin: 0 auto;">
+    <div class="progress-bar" role="progressbar" style="width: 50%;" aria-valuenow="25" 
+    aria-valuemin="0" aria-valuemax="100"></div>
+</div>
+
+<div *ngIf="submitted && renderResultTable && resultBtnSelect && !progressBar" style="width:100%;" 
+    [@fromRightleft]="tableVisibility">
+    <div *ngIf="tblErrorMsg == ''">
+        <div style="margin: 0 auto;text-align:right" class="detail-width">
+            <button type="button" class="btn btn-default" id="detailBtn" name="detailBtn"
+                [disabled]="isEmptyObject(selectedTableRow)" (click)="showDetailTab()">
+                Details
+            </button>
+        </div>
+        <div style="width:1100px; margin: 0 auto; padding-top:10px">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Address</th>
+                        <th scope="col">Favorite</th>
+                        <th scope="col">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let row of tableResultJsonData; let idx = index" [class.selected]="row.place_id === selectedTableRow.place_id" 
+                            (click)="tableRowClick(row)">
+                        <th scope="row">{{idx+1}}</th>
+                        <td><div style='width:25px'><img src='{{row.icon}}' width='100%' height='auto'></div></td>
+                        <td>{{row.name}}</td>
+                        <td>{{row.vicinity}}</td>
+                        <td>
+                            <button class="btn" (click)="addRemoveToFavourite(row)">
+                                <span *ngIf="!row.inFavourite" class="fa fa-star-o" ></span>
+                                <span *ngIf="row.inFavourite" class="fa fa-star yellowcolor"></span>
+                            </button>
+                        </td>
+                        <td>
+                            <button class="btn" (click)="showDetailTab(row)">
+                                <b>&gt;</b>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="text-align:center;">
+            <button type="button" class="btn btn-default" *ngIf="prevPageToken!=''" (click)="prevPage()">
+                Previous
+            </button>
+            <button type="button" class="btn btn-default" *ngIf="nextPageToken!=''" (click)="nextPage()">
+                Next
+            </button>
+        </div>
+    </div>    
+    <div *ngIf="tblErrorMsg != '' && !tblErrorMsgWarning" 
+        style="background-color: #ef6e9b; width:1100px; margin: 0 auto;text-align:left">
+        <p style='color:red; padding-left:30px'>{{tblErrorMsg}}</p>
+    </div>
+    <div *ngIf="tblErrorMsg != '' && tblErrorMsgWarning" 
+        style="background-color: #f7e2c0; width:1100px; margin: 0 auto;text-align:left">
+        <p style='color:#a7b76c; padding-left:30px'>{{tblErrorMsg}}</p>
+    </div>
+</div>
+
+<div *ngIf="submitted && renderResultTable && !resultBtnSelect && !progressBar" style="width:100%;" 
+    [@fromRightleft]="tableVisibility">
+    <div *ngIf="favErrorMsg == ''">
+        <div style="margin: 0 auto;text-align:right" class="detail-width">
+            <button type="button" class="btn btn-default" 
+                [disabled]="isEmptyObject(selectedTableRow)" (click)="showDetailTab()">
+                Details
+            </button>
+        </div>
+        <div style="width:1100px; margin: 0 auto; padding-top:10px">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Address</th>
+                        <th scope="col">Favorite</th>
+                        <th scope="col">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let row of favouriteData; let idx = index" [class.selected]="row.place_id === selectedTableRow.place_id" 
+                            (click)="tableRowClick(row)">
+                        <th scope="row">{{idx+1}}</th>
+                        <td><div style='width:25px'><img src='{{row.icon}}' width='100%' height='auto'></div></td>
+                        <td>{{row.name}}</td>
+                        <td>{{row.vicinity}}</td>
+                        <td>
+                            <button class="btn" (click)="addRemoveToFavourite(row)">
+                                <span class="fa fa-trash"></span>
+                            </button>
+                        </td>
+                        <td>
+                            <button class="btn" (click)="showDetailTab(row)">
+                                <b>&gt;</b>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="text-align:center;">
+            <button type="button" class="btn btn-default" *ngIf="hasPreviousFavourite" (click)="prevFavouritePage()">
+                Previous
+            </button>
+            <button type="button" class="btn btn-default" *ngIf="hasNextFavourite" (click)="nextFavouritePage()">
+                Next
+            </button>
+        </div>
+    </div>
+    <div *ngIf="favErrorMsg != ''" 
+        style="background-color: #f7e2c0; width:1100px; margin: 0 auto;text-align:left">
+        <p style='color:#a7b76c; padding-left:30px'>{{favErrorMsg}}</p>
+    </div>
+</div>
+
+
+<div *ngIf="submitted && renderDetailTabs" [@fromLeftRight]="detailVisibility">
+    <h4 style="text-align:center">{{selectedTableRow.name}}</h4>
+    <div class="row" style="text-align:center">
+        <div class="col-3">
+            <button class="btn" (click)="showResultTable()">
+                <b>&lt;List</b>
+            </button>
+        </div>
+        <div class="col-5"></div>
+        <div class="col-4" style="text-align:center;">
+            <button class="btn" (click)="addRemoveToFavourite()" [disabled]="isEmptyObject(infoTabData)">
+                <span *ngIf="!selectedTableRow.inFavourite" class="fa fa-star-o" ></span>
+                <span *ngIf="selectedTableRow.inFavourite" class="fa fa-star yellowcolor"></span>
+            </button>
+
+            <img src="http://cs-server.usc.edu:45678/hw/hw8/images/Twitter.png" width='35px' height='auto' 
+                    style="margin: 0; padding: 0;" (click)="twitterButtonClick()">
+            
+        </div>
+        
+    </div>
+    <div class="row">        
+        <div class="col-10 mx-auto">
+            <ul class="nav nav-tabs small justify-content-end" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab1" role="tab">Info</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab2" role="tab">Photos</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab3" role="tab">Map</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab4" role="tab">Reviews</a></li>
+            </ul>
+            <div class="tab-content py-4">
+                <div class="tab-pane active" id="tab1" role="tabpanel">
+                    <div *ngIf="!isEmptyObject(infoTabData) && detailErrorMsgInfo == ''">
+                        <table class="table table-striped">
+                            <tbody>
+                                <tr scope="row" *ngFor="let info of infoTabData">
+                                    <!-- Address, Phone number, Price Level check -->
+                                    <td *ngIf="info.category == 'Address' || info.category == 'Phone Number' 
+                                    || info.category == 'Price Level'">
+                                        {{info.category}}
+                                    </td>
+                                    <td *ngIf="info.category == 'Address' || info.category == 'Phone Number' 
+                                    || info.category == 'Price Level'">
+                                        {{info.value}}
+                                    </td>
+
+                                    <!-- Rating -->
+                                    <td *ngIf="info.category == 'Rating'">
+                                        {{info.category}}
+                                    </td>
+                                    <td *ngIf="info.category == 'Rating'">
+                                        <div style="width:450px;">
+                                            <div style="display: inline-block;">
+                                                {{info.value}}
+                                            </div>
+                                            <div style="display: inline-block;">
+                                                <div id="rating"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- url -->
+                                    <td *ngIf="info.category == 'Google Page'">
+                                        {{info.category}}
+                                    </td>
+                                    <td *ngIf="info.category == 'Google Page'">
+                                        <a href="{{info.value}}" target="_blank">{{info.value}}</a>
+                                    </td>
+
+                                    <!-- url -->
+                                    <td *ngIf="info.category == 'Website'">
+                                        {{info.category}}
+                                    </td>
+                                    <td *ngIf="info.category == 'Website'">
+                                        <a href="{{info.value}}" target="_blank">{{info.value}}</a>
+                                    </td>
+
+                                    <!-- Opening hours -->
+                                    <td *ngIf="info.category == 'Hours'">
+                                        {{info.category}}
+                                    </td>
+                                    <td *ngIf="info.category == 'Hours'">
+                                        {{info.value}} <a style="text-decoration: underline; cursor: pointer; color: #0000EE;"
+                                            data-toggle="modal" data-target="#exampleModalCenter">Daily open hours</a>
+                                    </td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div> 
+                    <div *ngIf="detailErrorMsgInfo != '' && !detailErrorMsgWarningInfo" 
+                        style="background-color: #ef6e9b; width:1100px; margin: 0 auto;text-align:left">
+                        <p style='color:red; padding-left:30px'>{{detailErrorMsgInfo}}</p>
+                    </div>
+                    <div *ngIf="detailErrorMsgInfo != '' && detailErrorMsgWarningInfo" 
+                        style="background-color: #f7e2c0; width:1100px; margin: 0 auto;text-align:left">
+                        <p style='color:#a7b76c; padding-left:30px'>{{detailErrorMsgInfo}}</p>
+                    </div>
+                </div>
+                <div class="tab-pane" id="tab2" role="tabpanel">
+                    <div *ngIf="detailErrorMsgPhoto == ''">
+                        <div class="row"> 
+                            <div class="column">
+                                <a *ngFor="let imgVal of photoGridColumn1" href="{{imgVal.url}}" target="_blank">
+                                    <img style="width:100%" src="{{imgVal.url}}"/>
+                                </a>
+                            </div>
+                            <div class="column">
+                                <a *ngFor="let imgVal of photoGridColumn2" href="{{imgVal.url}}" target="_blank">
+                                    <img style="width:100%" src="{{imgVal.url}}"/>
+                                </a>
+                            </div>
+                            <div class="column">
+                                <a *ngFor="let imgVal of photoGridColumn3" href="{{imgVal.url}}" target="_blank">
+                                    <img style="width:100%" src="{{imgVal.url}}"/>
+                                </a>
+                            </div>
+                            <div class="column">
+                                <a *ngFor="let imgVal of photoGridColumn4" href="{{imgVal.url}}" target="_blank">
+                                    <img style="width:100%" src="{{imgVal.url}}"/>
+                                </a>
+                            </div>                                
+                        </div>
+                    </div>
+                    
+                    <div *ngIf="detailErrorMsgPhoto != '' && !detailErrorMsgWarningPhoto" 
+                        style="background-color: #ef6e9b; width:1100px; margin: 0 auto;text-align:left">
+                        <p style='color:red; padding-left:30px'>{{detailErrorMsgPhoto}}</p>
+                    </div>
+                    <div *ngIf="detailErrorMsgPhoto != '' && detailErrorMsgWarningPhoto" 
+                        style="background-color: #f7e2c0; width:1100px; margin: 0 auto;text-align:left">
+                        <p style='color:#a7b76c; padding-left:30px'>{{detailErrorMsgPhoto}}</p>
+                    </div>
+                </div>
+                <div class="tab-pane" id="tab3" role="tabpanel">
+                    <form [formGroup]="myGoogleMapForm">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <div>From</div>
+                                    <div>
+                                        <input class="form-control" type="text" name="from" 
+                                            placeholder="Your location" id="from" #searchGoogleFrom 
+                                            [formControl]="myGoogleMapForm.controls['from']">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <div>To</div>
+                                    <div>
+                                        <input type="text" class="form-control" id="to" name="to" 
+                                            [formControl]="myGoogleMapForm.controls['to']" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="form-group">
+                                    <div>Travel Mode</div>
+                                    <div>
+                                        <select class="form-control custom-select" formControlName="travel_mode">
+                                            <option *ngFor="let mode of travel_mode" [ngValue]="mode">
+                                                {{ mode.display }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="form-group">
+                                    <div style="height: 20px"></div>
+                                    <div>
+                                        <button class="btn btn-info" id="getDirection" name="search" 
+                                            [disabled]="!myGoogleMapForm.valid" (click)="googleMapSubmit(myGoogleMapForm.value)">
+                                            Get Direction
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    <!--
+                        <div class="row">
+                            <div class="col-sm-4">From</div>
+                            <div class="col-sm-4">To</div>        
+                            <div class="col-sm-2">Travel Mode</div> 
+                            <div class="col-sm-2"></div>
+                        </div>
+                        <div class="row" style="border-color: grey; margin-top: 10px;">
+                            <div class="col-sm-4">
+                                <input class="form-control" type="text" name="from" 
+                                    placeholder="Your location" id="from" #searchGoogleFrom 
+                                    [formControl]="myGoogleMapForm.controls['from']">
+                            </div>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" id="to" name="to" 
+                                    [formControl]="myGoogleMapForm.controls['to']" readonly>
+                            </div>        
+                            <div class="col-sm-2">
+                                <select class="form-control custom-select" formControlName="travel_mode">
+                                    <option *ngFor="let mode of travel_mode" [ngValue]="mode">
+                                        {{ mode.display }}
+                                    </option>
+                                </select>
+                            </div> 
+                            <div class="col-sm-2">
+                                <button class="btn btn-info" id="getDirection" name="search" 
+                                    [disabled]="!myGoogleMapForm.valid" (click)="googleMapSubmit(myGoogleMapForm.value)">
+                                    Get Direction
+                                </button>
+                            </div>
+                        </div>
+                    -->
+
+                        <div class="row" style="border-color: grey; margin-top: 10px;">
+                            <div class="col-sm-12">
+                                <button class="btn btn-primary bg-white" (click)="togglePegmanMap()">
+                                    <img src="{{myGoogleMapPegmanToggle}}" width='35px' height='35px' 
+                                        style="margin: 0; padding: 0;">
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mapDiv" #mapDiv style="width:100%; height:300px; margin-top: 10px;"></div>
+                    <div *ngIf="!isPegman" id="mapDivDirection" #mapDivDirection style="width:100%; height:300px"></div>
+                </div>
+                <div class="tab-pane" id="tab4" role="tabpanel">                    
+                    <form [formGroup]="reviewForm">
+                        <div class="row" style="margin-bottom:15px">
+                            <div>
+                                <select class="form-control custom-select" formControlName="reviewType" 
+                                    style="display:inline-block; width: 150px">
+                                    <option *ngFor="let rtype of reviewType" [ngValue]="rtype">
+                                        {{ rtype.display }}
+                                    </option>
+                                </select>
+                                <select class="form-control custom-select" formControlName="reviewOrder" 
+                                        (change)="sortReview(reviewForm.value.reviewOrder.name)"
+                                        style="display:inline-block; width: 150px">
+                                    <option *ngFor="let rorder of reviewOrder" [ngValue]="rorder">
+                                        {{ rorder.display }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                    <div *ngIf="detailErrorMsgReview == ''">
+                        <div [@fading]="fadingReviewGoogle">
+                            
+                            <div *ngFor="let review of requiredReviewOrder" 
+                                    style="border: 1px grey solid; margin-bottom:5px; width: 100%; overflow: hidden;">
+                                <div style="width: 100px; float: left;">
+                                    <div style='width:70px;text-align:center;'>
+                                        <a href="{{review.author_url}}" target="_blank">
+                                            <img src='{{review.profile_photo_url}}' width='100%' height='auto' style="margin: 0; padding: 0;">
+                                        </a>
+                                    </div>
+                                </div>
+                                <div style="margin-left: 100px;">
+                                    <a href="{{review.author_url}}" target="_blank">{{review.author_name}}</a><br>
+                                    <div style="width:450px;">                                    
+                                        <div style="display: inline-block;">
+                                            <div id="{{review.divId}}"></div>
+                                        </div>
+                                        <div style="display: inline-block;">
+                                            {{review.time}}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {{review.text}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div *ngIf="detailErrorMsgReview != '' && !detailErrorMsgWarningReview" 
+                        style="background-color: #ef6e9b; width:1100px; margin: 0 auto;text-align:left">
+                        <p style='color:red; padding-left:30px'>{{detailErrorMsgReview}}</p>
+                    </div>
+                    <div *ngIf="detailErrorMsgReview != '' && detailErrorMsgWarningReview" 
+                        style="background-color: #f7e2c0; width:1100px; margin: 0 auto;text-align:left">
+                        <p style='color:#a7b76c; padding-left:30px'>{{detailErrorMsgReview}}</p>
+                    </div>                                    
+                </div>
+            </div>
+        </div>           
+    </div>
+</div>
+
+<div id="map" #map></div>
+<!--
+<div class="progress">
+    <div class="progress-bar" style="width:30%"></div>
+</div>
+-->
+
+
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" 
+        aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="width:350px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Open hours</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-hover">
+                    <tbody>
+                        <tr *ngFor="let row of weekdayTable">
+                            <td style="width:40px" *ngIf="row.currentDay"><b>{{row.day}}</b></td>
+                            <td style="width:200px" *ngIf="row.currentDay"><b>{{row.time}}</b></td>
+
+                            <td style="width:40px" *ngIf="!row.currentDay">{{row.day}}</td>
+                            <td style="width:200px" *ngIf="!row.currentDay">{{row.time}}</td>                            
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

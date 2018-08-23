@@ -1,0 +1,7 @@
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
+
+@media screen and (max-width: 480px) {
+    .mobile-center-align {
+        text-align: center !important;
+    }
+}
