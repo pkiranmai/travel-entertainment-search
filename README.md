@@ -1,12 +1,25 @@
 # Travel and Entertainment Search Website
 
+Website to search for places for travel and entertainment.
+
+#### Features: 
+
+- search for places, 
+- bookmark your favorite places, 
+- view details of places and directions on google maps, 
+- see reviews on yelp, etc.
+
+### Search:
 ![Image 1](https://raw.githubusercontent.com/pkiranmai/travel-entertainment-search/master/images/img1.png)
+
+### See location on map and directions:
 ![Image 2](https://raw.githubusercontent.com/pkiranmai/travel-entertainment-search/master/images/img2.png)
-![Image 3](https://raw.githubusercontent.com/pkiranmai/travel-entertainment-search/master/images/img3.png)
+
+### See Reviews:
 ![Image 4](https://raw.githubusercontent.com/pkiranmai/travel-entertainment-search/master/images/img4.png)
 
 ### Technologies:
-NodeJS for back-end, AngularJS for front-end, HTML, CSS
+NodeJS for back-end, AngularJS for front-end, JavaScript, HTML, CSS, Git, Deployed on AWS
 
 ## How to run:
 
