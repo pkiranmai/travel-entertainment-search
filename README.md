@@ -7,7 +7,7 @@ Website to search for places for travel and entertainment.
 - search for places, 
 - bookmark your favorite places, 
 - view details of places and directions on google maps, 
-- see reviews on yelp, etc.
+- see yelp and google reviews, etc.
 
 ### Search:
 ![Image 1](https://raw.githubusercontent.com/pkiranmai/travel-entertainment-search/master/images/img1.png)
